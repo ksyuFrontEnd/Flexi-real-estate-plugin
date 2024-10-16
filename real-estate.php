@@ -231,6 +231,24 @@ function register_real_estate_filter_widget() {
 }
 add_action('widgets_init', 'register_real_estate_filter_widget');
 
+// Create class for sorting posts by environmental friendliness
+class RealEstateQueryModifier {
+
+    public function __construct() {
+        add_action('pre_get_posts', [$this, 'modify_real_estate_query']);
+    }
+
+    public function modify_real_estate_query($query) {
+        if (!is_admin() && $query->is_main_query() && $query->get('post_type') === 'real_estate') {
+            $query->set('meta_key', 'environmental_friendliness');
+            $query->set('orderby', 'meta_value_num');
+            $query->set('order', 'DESC'); 
+        }
+    }
+}
+
+new RealEstateQueryModifier();
+
 // Processing AJAX request for filtering real estate objects
 function real_estate_filter() {
 
@@ -247,6 +265,9 @@ function real_estate_filter() {
         'post_type' => 'real_estate',
         'posts_per_page' => $number_of_items,
         'paged' => $paged,
+        'meta_key' => 'environmental_friendliness', 
+        'orderby' => 'meta_value_num', 
+        'order' => 'DESC', 
     );
 
     $meta_query = [];
@@ -374,8 +395,7 @@ function real_estate_filter() {
                                 <p>Кількість кімнат: <?php echo esc_html($room['amount_of_rooms']); ?></p>
                                 <p>Балкон: <?php echo esc_html($room['balcony'] ? 'Так' : 'Ні'); ?></p>
                                 <p>Санвузол: <?php echo esc_html($room['bathroom'] ? 'Так' : 'Ні'); ?></p>
-                                <a href="<?php the_permalink(); ?>" class="btn btn-primary">Детальніше</a>
-                                
+                                <a href="<?php the_permalink(); ?>" class="btn btn-primary">Детальніше</a>  
                             </div>
                         <?php endforeach; ?>
                     </div>
