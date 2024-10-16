@@ -90,45 +90,81 @@ function real_estate_filter_shortcode( $atts ) {
 
     ob_start(); 
     ?>
-    <form id="real-estate-filter" method="POST">
-        <label for="location">Район:</label>
-        <select name="location" id="location">
-            <option value="">Виберіть район</option>
-            <?php
-            
-            $districts = get_terms('district');
-            foreach ($districts as $district) {
-                echo '<option value="' . esc_attr($district->term_id) . '">' . esc_html($district->name) . '</option>';
-            }
-            ?>
-        </select>
+    <form id="real-estate-filter" method="POST" class="mb-4">
+        <div class="form-group">
+            <label for="location">Район:</label>
+            <select name="location" id="location" class="form-control">
+                <option value="">Виберіть район</option>
+                <?php
+                $districts = get_terms('district');
+                foreach ($districts as $district) {
+                    echo '<option value="' . esc_attr($district->term_id) . '">' . esc_html($district->name) . '</option>';
+                }
+                ?>
+            </select>
+        </div>
 
-        <label for="floors">Кількість поверхів:</label>
-        <select name="floors" id="floors">
-            <option value="">Виберіть кількість поверхів</option>
-            <?php for ($i = 1; $i <= 20; $i++) : ?>
-                <option value="<?php echo esc_attr($i); ?>"><?php echo esc_html($i); ?></option>
-            <?php endfor; ?>
-        </select>
+        <div class="form-group">
+            <label for="floors">Кількість поверхів:</label>
+            <select name="floors" id="floors" class="form-control">
+                <option value="">Виберіть кількість поверхів</option>
+                <?php for ($i = 1; $i <= 20; $i++) : ?>
+                    <option value="<?php echo esc_attr($i); ?>"><?php echo esc_html($i); ?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
 
-        <label for="build_type">Тип будівлі:</label>
-        <select name="build_type" id="build_type">
-            <option value="">Виберіть тип будівлі</option>
-            <option value="Панель">Панель</option>
-            <option value="Цегла">Цегла</option>
-            <option value="Піноблок">Піноблок</option>
-        </select>
+        <div class="form-group">
+            <label for="build_type">Тип будівлі:</label>
+            <select name="build_type" id="build_type" class="form-control">
+                <option value="">Виберіть тип будівлі</option>
+                <option value="Панель">Панель</option>
+                <option value="Цегла">Цегла</option>
+                <option value="Піноблок">Піноблок</option>
+            </select>
+        </div>
 
-        <label for="environmental_friendliness">Екологічність:</label>
-        <select name="environmental_friendliness" id="environmental_friendliness">
-            <option value="">Виберіть екологічність (1-5)</option>
-            <?php for ($i = 1; $i <= 5; $i++) : ?>
-                <option value="<?php echo esc_attr($i); ?>"><?php echo esc_html($i); ?></option>
-            <?php endfor; ?>
-        </select>
+        <div class="form-group">
+            <label for="environmental_friendliness">Екологічність:</label>
+            <select name="environmental_friendliness" id="environmental_friendliness" class="form-control">
+                <option value="">Виберіть екологічність (1-5)</option>
+                <?php for ($i = 1; $i <= 5; $i++) : ?>
+                    <option value="<?php echo esc_attr($i); ?>"><?php echo esc_html($i); ?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
 
-        <input type="submit" value="Фільтрувати">
+        <div class="form-group">
+            <label for="amount_of_rooms">Кількість кімнат:</label>
+            <select name="amount_of_rooms" id="amount_of_rooms" class="form-control">
+                <option value="">Виберіть кількість кімнат</option>
+                <?php for ($i = 1; $i <= 10; $i++) : ?>
+                    <option value="<?php echo esc_attr($i); ?>"><?php echo esc_html($i); ?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="balcony">Балкон:</label>
+            <select name="balcony" id="balcony" class="form-control">
+                <option value="">Виберіть наявність балкона</option>
+                <option value="Так">Так</option>
+                <option value="Ні">Ні</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="bathroom">Санвузол:</label>
+            <select name="bathroom" id="bathroom" class="form-control">
+                <option value="">Виберіть наявність санвузла</option>
+                <option value="Так">Так</option>
+                <option value="Ні">Ні</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Фільтрувати</button>
     </form>
+
     <?php
     return ob_get_clean(); 
 }
@@ -195,7 +231,6 @@ function register_real_estate_filter_widget() {
 }
 add_action('widgets_init', 'register_real_estate_filter_widget');
 
-
 // Processing AJAX request for filtering real estate objects
 function real_estate_filter() {
 
@@ -205,9 +240,7 @@ function real_estate_filter() {
     }
 
     $number_of_items = get_theme_mod('real_estate_filter_widget_number_of_items', 5);
-
     $paged = isset($_POST['paged']) ? $_POST['paged'] : 1;
-
     parse_str($_POST['filter'], $filter);
 
     $args = array(
@@ -241,11 +274,7 @@ function real_estate_filter() {
             'compare' => '='
         ];
     }
-
-    if (!empty($meta_query)) {
-        $args['meta_query'] = $meta_query;
-    }
-
+ 
     if (!empty($filter['location'])) {
         $args['tax_query'] = [
             [
@@ -255,14 +284,57 @@ function real_estate_filter() {
             ]
         ];
     }
-    
+
+    if (!empty($filter['amount_of_rooms']) || !empty($filter['balcony']) || !empty($filter['bathroom'])) {
+        $rooms_meta_query = [
+            'relation' => 'AND'
+        ];
+
+        if (!empty($filter['amount_of_rooms'])) {
+            $rooms_meta_query[] = [
+                'key' => 'amount_of_rooms',
+                'value' => $filter['amount_of_rooms'],
+                'compare' => '='
+            ];
+        }
+
+        if (!empty($filter['balcony'])) {
+            $rooms_meta_query[] = [
+                'key' => 'balcony',
+                'value' => $filter['balcony'] === 'Так' ? '1' : '0',
+                'compare' => '='
+            ];
+        }
+
+        if (!empty($filter['bathroom'])) {
+            $rooms_meta_query[] = [
+                'key' => 'bathroom',
+                'value' => $filter['bathroom'] === 'Так' ? '1' : '0',
+                'compare' => '='
+            ];
+        }
+
+        $meta_query[] = [
+            'key' => 'premises',
+            'value' => '',
+            'compare' => 'EXISTS',
+            'meta_query' => $rooms_meta_query
+        ];
+    }
+
+    if (!empty($meta_query)) {
+        $args['meta_query'] = $meta_query;
+    }
+
     $query = new WP_Query($args);
 
     if ($query->have_posts()) :
-        while ($query->have_posts()) : 
+        echo '<div id="real-estate-results" class="row">';
+            while ($query->have_posts()) : 
             $query->the_post(); ?>
             
             <div class="col-md-4">
+                <h5>Будинок:</h5>
                 <div class="card real-estate-item">
                     <div class="card-img">
                     <?php 
@@ -273,16 +345,45 @@ function real_estate_filter() {
                     </div>
 
                     <div class="card-body">
-                        <h5 class="card-title"><?php the_field('build_name') ?></h5>
-                        <p class="card-floors">Кількість поверхів: <?php the_field('number_of_floors') ?></p>
-                        <p class="card-type">Тип будинку: <?php the_field('build_type') ?></p>
-                        <p class="card-ecological">Екологічність: <?php the_field('environmental_friendliness') ?></p>
-                        <p class="card-text"><?php the_excerpt(); ?></p>
-                        <a href="<?php the_permalink(); ?>" class="btn btn-primary">Детальніше</a>  
+                        <div class="card-body__title">
+                            <h5 class="card-title"><?php the_field('build_name') ?></h5>
+                        </div>
+                        <div class="card-body__info">
+                            <p class="card-floors">Кількість поверхів: <?php the_field('number_of_floors') ?></p>
+                            <p class="card-type">Тип будинку: <?php the_field('build_type') ?></p>
+                            <p class="card-ecological">Екологічність: <?php the_field('environmental_friendliness') ?></p>
+                            <p class="card-text"><?php echo wp_trim_words(get_the_excerpt(), 20, '...'); ?></p>
+                            <a href="<?php the_permalink(); ?>" class="btn btn-primary">Детальніше</a> 
+                        </div> 
                     </div>
                 </div>
-            </div>
-        <?php endwhile;
+
+                <?php 
+                $rooms = get_field('premises');
+                if ($rooms) : ?>
+                    <h6>Приміщення:</h6>
+                    <div class="rooms-list">
+                        <?php foreach ($rooms as $room) : ?>
+                            <div class="room-item card card-body">
+                                <div class="card-img">
+                                    <?php if (!empty($room['rooms_image'])): ?>
+                                        <img class="img-fluid" src="<?php echo esc_url($room['rooms_image']['url']); ?>" alt="<?php echo esc_attr($room['rooms_image']['alt']); ?>" />
+                                    <?php endif; ?>
+                                </div>
+                                <p>Площа: <?php echo esc_html($room['square']); ?> м²</p>
+                                <p>Кількість кімнат: <?php echo esc_html($room['amount_of_rooms']); ?></p>
+                                <p>Балкон: <?php echo esc_html($room['balcony'] ? 'Так' : 'Ні'); ?></p>
+                                <p>Санвузол: <?php echo esc_html($room['bathroom'] ? 'Так' : 'Ні'); ?></p>
+                                <a href="<?php the_permalink(); ?>" class="btn btn-primary">Детальніше</a>
+                                
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                </div>
+            <?php endwhile;
+        echo '</div>';
 
         // Pagination
         $total_pages = $query->max_num_pages;

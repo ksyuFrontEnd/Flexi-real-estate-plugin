@@ -38,5 +38,4 @@ jQuery(document).ready(function($) {
         var page = $(this).attr('href').split('paged=')[1]; 
         loadPosts(page); 
     });
-
 });
