@@ -206,11 +206,14 @@ function real_estate_filter() {
 
     $number_of_items = get_theme_mod('real_estate_filter_widget_number_of_items', 5);
 
+    $paged = isset($_POST['paged']) ? $_POST['paged'] : 1;
+
     parse_str($_POST['filter'], $filter);
 
     $args = array(
         'post_type' => 'real_estate',
-         'posts_per_page' => $number_of_items,
+        'posts_per_page' => $number_of_items,
+        'paged' => $paged,
     );
 
     $meta_query = [];
@@ -281,7 +284,21 @@ function real_estate_filter() {
             </div>
         <?php endwhile;
 
-        // Додати Пагінацію
+        // Pagination
+        $total_pages = $query->max_num_pages;
+        if ($total_pages > 1) :
+            $current_page = max(1, $paged);
+            echo '<div class="pagination">';
+            echo paginate_links(array(
+                'base' => '%_%',
+                'format' => '?paged=%#%',
+                'current' => $current_page,
+                'total' => $total_pages,
+                'prev_text' => __('Попередня', 'text-domain'), 
+                'next_text' => __('Наступна', 'text-domain'), 
+            ));
+            echo '</div>';
+        endif;
 
     else :
         echo '<p>Об\'єкти нерухомості не знайдені.</p>';
